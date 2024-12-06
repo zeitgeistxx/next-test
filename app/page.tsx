@@ -40,8 +40,6 @@ const todos: Todo[] = [
   }
 ]
 
-const user: User = { roles: ["user"], id: "3", blockedBy: ["1"] }
-
 export default async function Home() {
   const { sessionClaims, userId } = await auth()
 
@@ -55,7 +53,7 @@ export default async function Home() {
     )
   }
 
-  // const user = { id: userId, roles: sessionClaims.roles }
+  const user = { id: userId, roles: sessionClaims.roles, blockedBy: [] }
 
   return (
     <div className="container mx-auto px-4 my-6">
@@ -63,15 +61,15 @@ export default async function Home() {
         {user.id}: {user.roles.join(", ")}
       </h1>
       <div className="flex gap-4 mb-4">
-        <GeneralButtonCheck resource="todos" action="view" />
-        <GeneralButtonCheck resource="todos" action="create" />
-        <GeneralButtonCheck resource="todos" action="update" />
-        <GeneralButtonCheck resource="todos" action="delete" />
+        <GeneralButtonCheck user={user} resource="todos" action="view" />
+        <GeneralButtonCheck user={user} resource="todos" action="create" />
+        <GeneralButtonCheck user={user} resource="todos" action="update" />
+        <GeneralButtonCheck user={user} resource="todos" action="delete" />
       </div>
       <ul className="grid gap-4 grid-cols-2">
         {todos.map(todo => (
           <li key={todo.id}>
-            <TodoComponent {...todo} />
+            <TodoComponent user={user} {...todo} />
           </li>
         ))}
       </ul>
@@ -79,7 +77,7 @@ export default async function Home() {
   )
 }
 
-function TodoComponent(todo: Todo) {
+function TodoComponent({ user, ...todo }: { user: User } & Todo) {
   const { title, userId, completed, invitedUsers } = todo
 
   return (
@@ -102,15 +100,16 @@ function TodoComponent(todo: Todo) {
         (hasPermission(user, "delete:ownComments") && user.id === authorID)) && (
         )} */}
       <CardFooter className="gap-2">
-        <TodoButttonCheck action="view" todo={todo} />
-        <TodoButttonCheck action="update" todo={todo} />
-        <TodoButttonCheck action="delete" todo={todo} />
+        <TodoButttonCheck user={user} action="view" todo={todo} />
+        <TodoButttonCheck user={user} action="update" todo={todo} />
+        <TodoButttonCheck user={user} action="delete" todo={todo} />
       </CardFooter>
     </Card>
   )
 }
 
-function GeneralButtonCheck({ resource, action }: {
+function GeneralButtonCheck({ user, resource, action }: {
+  user: User
   resource: "todos" | "comments"
   action: "view" | "create" | "update" | "delete"
 }) {
@@ -125,7 +124,8 @@ function GeneralButtonCheck({ resource, action }: {
   )
 }
 
-function TodoButttonCheck({ todo, action }: {
+function TodoButttonCheck({ user, todo, action }: {
+  user: User
   todo: Todo
   action: "view" | "create" | "update" | "delete"
 }) {
